@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#080f09" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GrowLog" />
+  <title>GrowLog</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Familjen+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ═══════════════════════ HEADER -->
+  <header id="app-header">
+    <div class="header-left">
+      <button class="back-btn hidden" id="back-btn" onclick="App.goBack()" aria-label="Voltar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <div class="logo" id="header-logo">
+        <span class="logo-mark">✦</span>
+        <span class="logo-text">GrowLog</span>
+      </div>
+      <div class="header-title hidden" id="header-title"></div>
+    </div>
+    <div class="header-right" id="header-actions"></div>
+  </header>
+
+  <!-- ═══════════════════════ SCREENS -->
+  <main id="main">
+
+    <!-- ── HOME -->
+    <section class="screen active" id="screen-home">
+      <div class="home-banner">
+        <div class="banner-content">
+          <p class="banner-eyebrow">Cultivo ativo</p>
+          <h1 class="banner-title" id="banner-title">Painel</h1>
+          <p class="banner-sub" id="banner-sub">Bem-vindo ao GrowLog</p>
+        </div>
+        <div class="banner-kpis">
+          <div class="kpi-pill"><span class="kpi-num" id="kpi-plants">0</span><span class="kpi-lbl">plantas</span></div>
+          <div class="kpi-pill"><span class="kpi-num" id="kpi-logs">0</span><span class="kpi-lbl">registros</span></div>
+          <div class="kpi-pill"><span class="kpi-num" id="kpi-days">—</span><span class="kpi-lbl">dias máx.</span></div>
+        </div>
+      </div>
+
+      <div class="section-label">Ações rápidas</div>
+      <div class="quick-grid">
+        <button class="quick-card accent" onclick="Modals.openPlant()">
+          <span class="qc-icon">＋</span>
+          <span class="qc-text">Nova planta</span>
+        </button>
+        <button class="quick-card" onclick="App.openLastPlant()">
+          <span class="qc-icon">🌱</span>
+          <span class="qc-text">Última planta</span>
+        </button>
+        <button class="quick-card" onclick="App.goTo('stats')">
+          <span class="qc-icon">📈</span>
+          <span class="qc-text">Estatísticas</span>
+        </button>
+        <button class="quick-card" onclick="Modals.openImportExport()">
+          <span class="qc-icon">💾</span>
+          <span class="qc-text">Backup / CSV</span>
+        </button>
+      </div>
+
+      <div class="section-label">Alertas</div>
+      <div class="alert-list" id="alert-list">
+        <div class="empty-hint">Adicione plantas para ver alertas aqui.</div>
+      </div>
+
+      <div class="section-label" id="plants-section-label">Plantas</div>
+      <div class="plant-list" id="plant-list">
+        <div class="empty-hint">Nenhuma planta cadastrada ainda.</div>
+      </div>
+
+      <button class="fab" onclick="Modals.openPlant()" aria-label="Nova planta">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </section>
+
+    <!-- ── PLANT DETAIL -->
+    <section class="screen" id="screen-detail">
+      <div class="stage-ribbon" id="stage-ribbon">
+        <div class="ribbon-left">
+          <span class="ribbon-label">estágio</span>
+          <span class="ribbon-stage" id="ribbon-stage">—</span>
+        </div>
+        <div class="ribbon-counters">
+          <div class="ribbon-cnt">
+            <span class="ribbon-num" id="ribbon-days">—</span>
+            <span class="ribbon-unit">dias</span>
+          </div>
+          <div class="ribbon-divider"></div>
+          <div class="ribbon-cnt">
+            <span class="ribbon-num" id="ribbon-weeks">—</span>
+            <span class="ribbon-unit">sem.</span>
+          </div>
+        </div>
+        <button class="ribbon-edit-btn" onclick="Modals.openStage()" title="Editar estágio">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+
+      <div class="detail-alert hidden" id="detail-alert"></div>
+
+      <!-- Countdown de colheita -->
+      <div class="countdown-card hidden" id="countdown-card">
+        <div class="countdown-left">
+          <span class="countdown-label">colheita estimada</span>
+          <span class="countdown-date" id="countdown-date">—</span>
+        </div>
+        <div class="countdown-right">
+          <span class="countdown-num" id="countdown-days">—</span>
+          <span class="countdown-unit" id="countdown-unit">dias</span>
+        </div>
+        <div class="countdown-bar-wrap">
+          <div class="countdown-bar" id="countdown-bar"></div>
+        </div>
+      </div>
+
+      <!-- VPD do último registro -->
+      <div class="vpd-card hidden" id="vpd-card">
+        <div class="vpd-left">
+          <span class="vpd-label">VPD (último registro)</span>
+          <span class="vpd-val" id="vpd-val">—</span>
+          <span class="vpd-unit">kPa</span>
+        </div>
+        <div class="vpd-zone" id="vpd-zone"></div>
+      </div>
+
+      <div class="detail-actions">
+        <button class="dact-btn" onclick="Modals.openEntry('water')">💧 Rega</button>
+        <button class="dact-btn" onclick="Modals.openEntry('climate')">🌡️ Clima</button>
+        <button class="dact-btn accent" onclick="Modals.openEntry()">＋ Registro</button>
+        <button class="dact-btn" onclick="App.exportPlantCSV()">📊 CSV</button>
+      </div>
+
+      <div class="section-label">Registros</div>
+      <div class="entries-list" id="entries-list">
+        <div class="empty-hint">Nenhum registro ainda. Use os botões acima.</div>
+      </div>
+    </section>
+
+    <!-- ── STATS -->
+    <section class="screen" id="screen-stats">
+      <div class="stats-wrap" id="stats-wrap">
+        <div class="empty-hint">Sem dados ainda.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════ BOTTOM NAV -->
+  <nav class="bnav">
+    <button class="bnav-item active" data-screen="home" onclick="App.goTo('home')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Início</span>
+    </button>
+    <button class="bnav-item" data-screen="detail" id="bnav-detail" onclick="App.goTo('detail')" style="display:none">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>Planta</span>
+    </button>
+    <button class="bnav-item" data-screen="stats" onclick="App.goTo('stats')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Stats</span>
+    </button>
+    <button class="bnav-item" onclick="Modals.openImportExport()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      <span>Dados</span>
+    </button>
+  </nav>
+
+</div><!-- /#app -->
+
+
+<!-- ═══════════════════════════════════════════
+     MODAIS
+═══════════════════════════════════════════ -->
+
+<!-- NOVA / EDITAR PLANTA -->
+<div class="overlay" id="modal-plant">
+  <div class="sheet">
+    <div class="sheet-drag"></div>
+    <h2 class="sheet-title" id="mp-title">Nova Planta</h2>
+
+    <div class="field-group">
+      <label class="field-label" for="mp-name">Nome / Strain</label>
+      <input class="field-input" id="mp-name" type="text" placeholder="Ex: Lemon Drizzle #2" autocomplete="off" />
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Tipo</label>
+        <div class="pill-group" id="mp-type-group">
+          <button class="pill active" data-v="auto">🔄 Auto</button>
+          <button class="pill" data-v="foto">📸 Foto</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="mp-date">Data de início</label>
+        <input class="field-input" id="mp-date" type="date" />
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="mp-cycle">Ciclo de rega</label>
+      <select class="field-input" id="mp-cycle">
+        <option value="2-1">2 com nutriente / 1 sem</option>
+        <option value="1-1">1 com nutriente / 1 sem</option>
+        <option value="3-1">3 com nutriente / 1 sem</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label" for="mp-veg-weeks">Semanas de Vega</label>
+        <input class="field-input" id="mp-veg-weeks" type="number" min="1" max="20" placeholder="Ex: 4" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="mp-flower-weeks">Semanas de Flor</label>
+        <input class="field-input" id="mp-flower-weeks" type="number" min="1" max="20" placeholder="Ex: 8" />
+      </div>
+    </div>
+    <p class="field-hint">Usado para calcular o <em>countdown até a colheita</em>. Deixe em branco se não souber ainda.</p>
+    <div class="field-group">
+      <label class="field-label" for="mp-obs">Observações</label>
+      <textarea class="field-input" id="mp-obs" rows="2" placeholder="Vaso, substrato, genética..."></textarea>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" onclick="Modals.close('modal-plant')">Cancelar</button>
+      <button class="btn accent" onclick="Modals.savePlant()">Salvar planta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ESTÁGIO -->
+<div class="overlay" id="modal-stage">
+  <div class="sheet">
+    <div class="sheet-drag"></div>
+    <h2 class="sheet-title">Estágio &amp; Progresso</h2>
+    <div class="field-group">
+      <label class="field-label">Estágio atual</label>
+      <div class="pill-group wrap" id="stage-pill-group">
+        <button class="pill" data-v="germinacao">🌰 Germinação</button>
+        <button class="pill" data-v="plantula">🌱 Plântula</button>
+        <button class="pill active" data-v="vegetativo">🍃 Vegetativo</button>
+        <button class="pill" data-v="floracao">🌸 Floração</button>
+        <button class="pill" data-v="colheita">✂️ Colheita</button>
+      </div>
+    </div>
+    <p class="field-hint">Dias de vida e semana são calculados automaticamente. Preencha abaixo <em>somente</em> para sobrescrever.</p>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label" for="ms-days">Dias (override)</label>
+        <input class="field-input" id="ms-days" type="number" min="0" placeholder="Automático" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="ms-weeks">Semana (override)</label>
+        <input class="field-input" id="ms-weeks" type="number" min="1" placeholder="Automático" />
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost" onclick="Modals.close('modal-stage')">Cancelar</button>
+      <button class="btn accent" onclick="Modals.saveStage()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTRO -->
+<div class="overlay" id="modal-entry">
+  <div class="sheet tall">
+    <div class="sheet-drag"></div>
+    <h2 class="sheet-title" id="me-title">Novo Registro</h2>
+
+    <!-- Data & Progresso -->
+    <div class="fsec">
+      <div class="fsec-head">🗓 Data &amp; Progresso</div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" for="ef-date">Data</label>
+          <input class="field-input" id="ef-date" type="date" onchange="Entry.autoProgress()" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="ef-time">Hora</label>
+          <input class="field-input" id="ef-time" type="time" />
+        </div>
+      </div>
+      <div class="computed-row">
+        <div class="computed-box">
+          <span class="computed-lbl">Dias de vida</span>
+          <span class="computed-val" id="ef-days-auto">—</span>
+        </div>
+        <div class="computed-box">
+          <span class="computed-lbl">Semana no estágio</span>
+          <span class="computed-val" id="ef-weeks-auto">—</span>
+        </div>
+      </div>
+      <div class="field-group" style="margin-top:10px">
+        <label class="field-label">Estágio</label>
+        <div class="pill-group wrap" id="entry-stage-group">
+          <button class="pill" data-v="germinacao">🌰 Germinação</button>
+          <button class="pill" data-v="plantula">🌱 Plântula</button>
+          <button class="pill active" data-v="vegetativo">🍃 Vegetativo</button>
+          <button class="pill" data-v="floracao">🌸 Floração</button>
+          <button class="pill" data-v="colheita">✂️ Colheita</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ambiente -->
+    <div class="fsec">
+      <div class="fsec-head">🌡️ Ambiente</div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" for="ef-temp">Temperatura (°C)</label>
+          <input class="field-input" id="ef-temp" type="number" step="0.1" placeholder="24.5" oninput="VPD.recalc()" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="ef-ur">Umidade (%)</label>
+          <input class="field-input" id="ef-ur" type="number" step="0.1" placeholder="65" oninput="VPD.recalc()" />
+        </div>
+      </div>
+      <!-- VPD calculado -->
+      <div class="computed-row">
+        <div class="computed-box">
+          <span class="computed-lbl">VPD (kPa)</span>
+          <span class="computed-val dim" id="ef-vpd-auto">— preencha T° e UR</span>
+        </div>
+        <div class="computed-box" id="ef-vpd-zone-box">
+          <span class="computed-lbl">Zona</span>
+          <span class="computed-val dim" id="ef-vpd-zone">—</span>
+        </div>
+      </div>
+      <p class="field-hint">VPD ideal: 0.8–1.2 kPa em Veg · 1.2–1.6 kPa em Flor.</p>
+    </div>
+
+    <!-- Luz -->
+    <div class="fsec">
+      <div class="fsec-head">💡 Luz</div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" for="ef-dimmer">Dimmer (%)</label>
+          <input class="field-input" id="ef-dimmer" type="number" min="0" max="100" placeholder="75" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="ef-dist">Distância (cm)</label>
+          <input class="field-input" id="ef-dist" type="number" placeholder="45" />
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="ef-lux">Lux (medido)</label>
+        <input class="field-input" id="ef-lux" type="number" placeholder="15000" oninput="Light.recalc()" />
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label" for="ef-ledon">Liga</label>
+          <input class="field-input" id="ef-ledon" type="time" oninput="Light.recalc()" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="ef-ledoff">Desliga</label>
+          <input class="field-input" id="ef-ledoff" type="time" oninput="Light.recalc()" />
+        </div>
+      </div>
+      <div class="computed-row">
+        <div class="computed-box">
+          <span class="computed-lbl">PPFD (µmol/m²/s)</span>
+          <span class="computed-val dim" id="ef-ppfd-auto">— preencha Lux</span>
+        </div>
+        <div class="computed-box">
+          <span class="computed-lbl">DLI (mol/m²/d)</span>
+          <span class="computed-val dim" id="ef-dli-auto">— preencha horários</span>
+        </div>
+      </div>
+      <div class="light-feedback hidden" id="light-feedback"></div>
+    </div>
+
+    <!-- Rega -->
+    <div class="fsec">
+      <div class="fsec-head">💧 Rega</div>
+      <div class="toggle-row">
+        <span class="toggle-lbl">Regou hoje?</span>
+        <button class="toggle-btn" id="tgl-water" onclick="UI.toggle('tgl-water','water-fields')" role="switch" aria-checked="false"></button>
+      </div>
+      <div class="collapsible" id="water-fields">
+        <div class="field-row" style="margin-top:12px">
+          <div class="field-group">
+            <label class="field-label" for="ef-water">Água (ml)</label>
+            <input class="field-input" id="ef-water" type="number" placeholder="1000" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="ef-ec">EC / ppm</label>
+            <input class="field-input" id="ef-ec" type="number" step="0.1" placeholder="1.3" />
+          </div>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="ef-ph">pH</label>
+          <input class="field-input" id="ef-ph" type="number" step="0.1" placeholder="6.2" />
+        </div>
+        <div class="toggle-row" style="margin-top:8px">
+          <span class="toggle-lbl">Usou nutrientes?</span>
+          <button class="toggle-btn" id="tgl-nut" onclick="UI.toggle('tgl-nut','nut-fields')" role="switch" aria-checked="false"></button>
+        </div>
+        <div class="collapsible" id="nut-fields">
+          <div class="field-row" style="margin-top:12px">
+            <div class="field-group">
+              <label class="field-label" for="nut-name">Nutriente</label>
+              <input class="field-input" id="nut-name" type="text" placeholder="Ex: Grow A" />
+            </div>
+            <div class="field-group" style="max-width:110px">
+              <label class="field-label" for="nut-qty">ml/L</label>
+              <input class="field-input" id="nut-qty" type="number" step="0.1" placeholder="2" />
+            </div>
+          </div>
+          <button class="btn ghost small" onclick="Entry.addNutrient()" style="width:100%">＋ Adicionar nutriente</button>
+          <div class="nut-tags" id="nut-tags"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Obs -->
+    <div class="fsec">
+      <div class="fsec-head">📝 Observações</div>
+      <textarea class="field-input" id="ef-obs" rows="3" placeholder="Folhas, aroma, treinamento, pragas, runoff..."></textarea>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn ghost" onclick="Modals.close('modal-entry')">Cancelar</button>
+      <button class="btn accent" onclick="Modals.saveEntry()">Salvar registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETALHES DO REGISTRO -->
+<div class="overlay" id="modal-entry-detail">
+  <div class="sheet">
+    <div class="sheet-drag"></div>
+    <h2 class="sheet-title">Detalhes do Registro</h2>
+    <div id="entry-detail-body"></div>
+    <div class="sheet-actions">
+      <button class="btn danger" id="entry-detail-del">Excluir</button>
+      <button class="btn ghost" onclick="Modals.close('modal-entry-detail')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT / EXPORT -->
+<div class="overlay" id="modal-ie">
+  <div class="sheet">
+    <div class="sheet-drag"></div>
+    <h2 class="sheet-title">Dados &amp; Backup</h2>
+    <div class="ie-grid">
+      <button class="ie-card" onclick="App.exportAll()">
+        <span class="ie-icon">📤</span>
+        <strong>Exportar CSV</strong>
+        <span>Todos os registros</span>
+      </button>
+      <button class="ie-card" onclick="App.exportBackup()">
+        <span class="ie-icon">💾</span>
+        <strong>Backup JSON</strong>
+        <span>Dados completos</span>
+      </button>
+      <button class="ie-card" onclick="document.getElementById('import-file').click()">
+        <span class="ie-icon">📥</span>
+        <strong>Importar</strong>
+        <span>Restaurar backup</span>
+      </button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="App.importBackup(event)" />
+    <div class="sheet-actions" style="margin-top:8px">
+      <button class="btn ghost" onclick="Modals.close('modal-ie')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMAÇÃO -->
+<div class="overlay" id="modal-confirm">
+  <div class="sheet compact">
+    <div class="sheet-drag"></div>
+    <h2 class="sheet-title" id="confirm-title">Confirmar</h2>
+    <p class="confirm-msg" id="confirm-msg"></p>
+    <div class="sheet-actions">
+      <button class="btn ghost" onclick="UI.resolveConfirm(false)">Cancelar</button>
+      <button class="btn danger" onclick="UI.resolveConfirm(true)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
